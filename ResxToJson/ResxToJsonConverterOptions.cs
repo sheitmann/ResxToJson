@@ -73,6 +73,10 @@ namespace Croc.DevTools.ResxToJson
 		/// Overwrite existing files. 
 		/// </summary>
 		public OverwriteModes Overwrite { get; set; }
+
+		public bool UseFallbackForMissingTranslation { get; set; }
+
+		public string FilePattern { get; set; }
 	}
 
 	public enum OverwriteModes
@@ -85,6 +89,7 @@ namespace Croc.DevTools.ResxToJson
     public enum OutputFormat
     {
         RequireJs,
-        i18next
+        i18next,
+		DevExtreme
     }
 }

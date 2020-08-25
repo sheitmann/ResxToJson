@@ -17,7 +17,8 @@ namespace Croc.DevTools.ResxToJson
             CaseArgumentMissing = -3,
             InvalidInputPath = -4,
             OutputFormatArgumentMissing = -5,
-	        FallbackArgumentMissing = -6
+	        FallbackArgumentMissing = -6,
+			PatternArgumentMissing = -7,
 	    }
 
 	    static void CrashAndBurn(ExitCode code, string crashMessage, params object[] args)
@@ -33,7 +34,7 @@ namespace Croc.DevTools.ResxToJson
             Console.ForegroundColor = c;
 
             // Die!
-            Environment.Exit((int)code);
+			Environment.Exit((int)code);
         }
 
 		static ResxToJsonConverterOptions getOptions(string[] args)
@@ -127,6 +128,19 @@ namespace Croc.DevTools.ResxToJson
 					options.Recursive = true;
 					continue;
 				}
+				if (key == "-autofill")
+				{
+					options.UseFallbackForMissingTranslation = true;
+					continue;
+				}
+				if (key == "-p" || key == "-pattern") {
+					if (args.Length == i + 1) {
+						CrashAndBurn(ExitCode.PatternArgumentMissing, "Value for option 'pattern' is missing");
+					}
+					options.FilePattern = args[i + 1];
+					i++;
+					continue;
+				}
 			}
 			return options;
 		}
@@ -166,7 +180,6 @@ namespace Croc.DevTools.ResxToJson
 				Console.WriteLine(item.Message);
 				Console.ForegroundColor = backupColor;
 			}
-			
 		}
 
 		static void checkOptions(ResxToJsonConverterOptions options)
@@ -183,15 +196,23 @@ namespace Croc.DevTools.ResxToJson
 
 					if (Directory.Exists(path))
 					{
-						options.InputFolders.Add(path);
-					}
-					else if (File.Exists(path))
-					{
+						if (!string.IsNullOrEmpty(options.FilePattern)) {
+							try {
+								var files = Directory.EnumerateFiles(path, options.FilePattern);
+								foreach (string file in files) {
+									options.InputFiles.Add(file);
+								}
+							} catch (Exception exception) {
+								CrashAndBurn(ExitCode.InvalidInputPath,
+									"'{0}' is not a valid pattern.", options.FilePattern);
+							}
+						} else {
+							options.InputFolders.Add(path);
+						}
+					} else if (File.Exists(path)) {
 						options.InputFiles.Add(path);
-					}
-					else
-					{
-                        CrashAndBurn(ExitCode.InvalidInputPath, "input path '{0}' doesn't relate to a file or a directory", path);
+					} else {
+						CrashAndBurn(ExitCode.InvalidInputPath, "input path '{0}' doesn't relate to a file or a directory", path);
 					}
 				}
 			}
@@ -214,14 +235,19 @@ A resx-resources to json converter for using with RequireJS i18n plugin (see htt
 USAGE:
   -input or -i              - path to directory with *.resx files or to separate file 
                               HINT: there can be several such options specifed at once
+  -pattern or -p             - file pattern used together with the directory to get the input files
   -outputDir or -dir        - path to output directory (where result js files will be placed)
   -outputFile or -file      - path to output file (instead of outputDir)
   -outputFormat or -format  - output format selection:
                                 RequireJs (default) -> output will be AMD modules suitable for use with requireJs i18n
                                 i18next             -> output will be JSON dictionary files that can be used with i18next
+                                DevExtreme          -> output will be a javascript file usable by DevExtreme localization
   -fallback                 - When using i18next the 'root' translations get used as the fallback culture, which go in 
                               their own subdirectory (essentially forming their own culture). By default this will be 
-                              'dev', however you should probably specify something more appropriate like 'en' or 'fr'
+                              'dev', however you should probably specify something more appropriate like 'en' or 'fr'.
+                              For DevExtreme this is used as the culture for the neutral language file and needs to be 
+                              specified.
+  -autofill                 - When specified, missing translations are filled with the neutral language entries.
   -case or -c               - resource keys formating options: 
                                 keep (default) - do not change names
                                 camel - 'SomeMsg' -> 'someMsg'
