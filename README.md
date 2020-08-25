@@ -1,9 +1,10 @@
 # OVERVIEW
 
 This tool converts .NET resources (*.resx-files) into client js-resources.
-Currently the tool supports two output formats:
+Currently the tool supports three output formats:
 * js files for loading via RequireJS-plugin i18n (see http://requirejs.org/docs/api.html#i18n)
 * json files for loading via i18next (see http://i18next.com/)
+* js files for loading via DevExtreme localization
 
 
 # OPTIONS
@@ -23,6 +24,14 @@ The tool expects to find one or many files with the same base name:
 
 All such files form a _bundle_ with base name 'Resources' and 4 culture-specific resources (one of them is invariant culture).
 If the option targets a file then you should specifies all files of a bundle (like: `-i res.resx -i res.nl.resx -i res.ru.resx`). You can mix specifying folders and separate files.
+
+##pattern
+Default value: none
+Required: no
+Aliases: `-p`, `-pattern`
+
+A file pattern containing * as wildcard. Is used together with the directory to find matching files.
+Can be used if in the directory are multiple resx files but only specific ones should be used.
 
 ## outputFormat
 Value: `RequireJs`, `i18next`  
@@ -89,10 +98,11 @@ The flag specifies then read-only files (if any) will be overwritten.
 ## fallbackCulture
 Value: string  
 Default value: 'dev'  
-Required: no  
+Required: no except when format is DevExtreme
 Aliases: `-fallback`, `-fallbackCulture`  
 
 When using i18next as output format the 'root' translations get used as the fallback culture, which go in their own subdirectory (essentially forming their own culture). By default this will be 'dev', however you should probably specify something more appropriate like 'en' or 'fr'.
+For DevExtreme this is used as the culture for the neutral language file and needs to be specified.
 
 
 # INSTALL
